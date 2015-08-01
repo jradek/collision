@@ -1,4 +1,5 @@
 window.onload = function () {
+    "use strict";
     var canvas = document.getElementById("canvas"),
         context = canvas.getContext("2d"),
         width = canvas.width = window.innerWidth,
@@ -12,6 +13,8 @@ window.onload = function () {
         angles = [],
         magnitudes = [],
         numParticles = 80,
+        padding = 20,
+        paddingSquared = padding * padding,
         i,
         j,
         // frame rate handling
@@ -27,7 +30,7 @@ window.onload = function () {
     }
     
     function initializeParticles() {
-        for (i = 0; i < numParticles; i++) {
+        for (i = 0; i < numParticles; i += 1) {
             var p1 = randomPoint(),
                 p2 = randomPoint(),
                 p = particle.create(p1.x, p1.y, 0, 0),
@@ -49,25 +52,24 @@ window.onload = function () {
             
     initializeParticles();
     startAnimating(30);
-        
     
     function algorithm() {
-        for (i = 0; i < numParticles; i++) {
+        for (i = 0; i < numParticles; i += 1) {
             var p = particles[i],
                 t = targets[i],
                 angle = p.angleTo(t),
                 dx = Math.cos(angle),
                 dy = Math.sin(angle);
             
-            for(j = 0; j < numParticles; j++) {                
-                if (i == j) {
+            for (j = 0; j < numParticles; j += 1) {
+                if (i === j) {
                     continue;
                 }
                 
                 var otherP = particles[j],
                     d = p.distanceTo(otherP),
                     a = otherP.angleTo(p),
-                    coef = 425 / (d * d);
+                    coef = paddingSquared / (d * d);
                 
                 dx = dx + Math.cos(a) * coef;
                 dy = dy + Math.sin(a) * coef;
@@ -78,28 +80,26 @@ window.onload = function () {
             magnitudes[i] = Math.sqrt(dx * dx + dy * dy);
         }
         
-        for (i = 0; i < numParticles; i++) {
+        for (i = 0; i < numParticles; i += 1) {
             var p = particles[i],
                 t = targets[i],
                 angle = angles[i],
                 magnitude = magnitudes[i],
-                speed = Math.min(1, 0.2 + magnitude * 0.8),
                 baseSpeed = 5,
-                dx = Math.cos(angle) * baseSpeed * speed,
-                dy = Math.sin(angle) * baseSpeed * speed;
-                                
-            p.velocity.setX(dx);        
-            p.velocity.setY(dy);
+                speed = Math.min(1, 0.2 + magnitude * 0.8) * baseSpeed;
+
+            // update velocity
+            p.setHeading(angle);
+            p.setSpeed(speed);
             
             p.update();
             
             if (p.distanceTo(t) < 10) {
                 var newTarget = randomPoint();
-                targets[i].position.setX(newTarget.x);
-                targets[i].position.setY(newTarget.y);
-            }                
+                targets[i].x = newTarget.x;
+                targets[i].y = newTarget.y;
+            }
         }
-        
     }
         
     function update() {
@@ -123,17 +123,17 @@ window.onload = function () {
 
             context.beginPath();
             context.rect(playgroundX, playgroundY, playgroundWidth, playgroundHeight);
-            context.stroke();                
+            context.stroke();
 
             // draw routine
-            for (i = 0; i < numParticles; i++) {
+            for (i = 0; i < numParticles; i += 1) {
                 var p = particles[i];
 
                 if (i === 0) {
                     // draw target
                     context.beginPath();
                     context.fillStyle = "#00FF00";
-                    context.arc(targets[i].position.getX(), targets[i].position.getY(), 3, 0, Math.PI * 2, false);
+                    context.arc(targets[i].x, targets[i].y, 3, 0, Math.PI * 2, false);
                     context.fill();
                     
                     context.fillStyle = "#FF0000";
@@ -143,7 +143,7 @@ window.onload = function () {
                 
                 // draw particle
                 context.beginPath();
-                context.arc(p.position.getX(), p.position.getY(), 3, 0, Math.PI * 2, false);
+                context.arc(p.x, p.y, 3, 0, Math.PI * 2, false);
                 context.fill();
             }
         }
